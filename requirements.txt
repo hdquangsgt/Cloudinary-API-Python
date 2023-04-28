@@ -1,0 +1,5 @@
+cloudinary==1.32.0
+Flask==2.2.3
+Flask_RESTful==0.3.9
+python-dotenv==1.0.0
+Requests==2.29.0
