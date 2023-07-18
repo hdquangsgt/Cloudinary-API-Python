@@ -1,4 +1,5 @@
 from flask_restful import Api
+from controllers.imageController import ImageCloudinary
 from controllers.handleController import HandleCloudinary
 
 class GenerateAPI():
@@ -7,4 +8,6 @@ class GenerateAPI():
     
     def run(self):
         # Define url at here
-        self.api.add_resource(HandleCloudinary, "/handle")
+        self.api.add_resource(ImageCloudinary, '/api/image')
+
+        self.api.add_resource(HandleCloudinary, '/api/handle')

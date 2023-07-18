@@ -10,8 +10,8 @@ class HandleCloudinary(Resource):
 
     def post(self):
         uploadResponse = self.handleImage.upload(request)
-        self.handleImage.transformation(uploadResponse, request)
+        result = self.handleImage.transfer(uploadResponse, request)
         
         urlImage = self.downloadFile.downloadImage(uploadResponse['url_upload'], uploadResponse['public_id'])
 
-        return jsonify({"message": 'Handle image completed', "url": urlImage})
+        return jsonify({"message": 'Handle image completed', "url": urlImage, "result": result})

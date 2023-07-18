@@ -1,6 +1,5 @@
 import os
 import requests
-import socket
 from flask import request
 
 class DownloadFile:
