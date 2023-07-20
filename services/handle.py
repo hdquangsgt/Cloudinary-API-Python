@@ -1,8 +1,10 @@
 import os
+import base64
 import cloudinary
 import cloudinary.uploader as CloudinaryUploader
 from cloudinary import CloudinaryImage
 from dotenv import load_dotenv
+import requests
 
 # Load environment variables from .env file
 load_dotenv()
@@ -18,10 +20,13 @@ cloudinary.config(
 class HandleImage():
     def upload(self, request):
         # Get the image file from the request
-        image = request.form.get("url") or request.files.get("file")
-
+        imageURL = request.form.get("url")
+        filename = request.files.get("filename")
+        imageResponse = requests.get(imageURL)
+        if(imageResponse.status_code == 200):
+            imageBase64 = "data:image/jpg;base64," + base64.b64encode(imageResponse.content).decode('utf-8')
         # Upload the image to Cloudinary
-        response = CloudinaryUploader.upload(image)
+        response = CloudinaryUploader.upload(file=imageBase64, public_id=filename)
 
         # Extract the public_id and url from the response
         publicId = response.get("public_id")
@@ -81,6 +86,21 @@ class HandleImage():
 
         return parsedDict
     
+    def _parseFontStyle(self, fontStyle):
+        optionStyle = {}
+        styleArr = {
+            "bold": "font_weight",
+            "italic": "font_style",
+            "underline": "text_decoration",
+        }
+        fontStyleArr = fontStyle.split('_')
+        for style in fontStyleArr:
+            if(style in styleArr):
+                styleKey = styleArr.get(style)
+                optionStyle[style] = styleKey
+
+        return optionStyle
+    
     """ 
     Feature: Insert text in original image
     @param text:{string}
@@ -88,7 +108,7 @@ class HandleImage():
     """
     def _insertText(self, text, styleText):
         styles = self._parseStyle(styleText)
-        fontWeight = styles.get('weight')
+        fontStyles = self._parseFontStyle(styles.get('style'))
         options = [
             {
                "color": styles.get('color', "#000000"),
@@ -96,6 +116,7 @@ class HandleImage():
                    "font_family": styles.get('font', "arial"),
                    "font_size": styles.get('size', 12),
                    "text": text,
+                   **fontStyles,
                 },
             },
             {
@@ -108,9 +129,6 @@ class HandleImage():
                 "y": styles.get('y'),
             }
         ]
-        
-        if(fontWeight):
-            options["font_weight"] = fontWeight
 
         return options
     
@@ -122,7 +140,7 @@ class HandleImage():
     def _insertImage(self, contentImage, styleImage):
         styles = self._parseStyle(styleImage)
         return [
-            {'overlay': "image:" + contentImage['public_id']},
+            {'overlay': contentImage['public_id']},
             {
                 'flags': "layer_apply",
                 'gravity': self._convertPosition(styles.get('position')),
